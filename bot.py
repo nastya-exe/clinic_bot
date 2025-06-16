@@ -14,6 +14,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from db.models import Clinics, Doctors, DoctorSchedule
+from config import BOT_TOKEN
 
 
 from db.db_session import async_session_maker
@@ -312,7 +313,7 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
 
 
 async def main():
-    bot = Bot(token='8104912382:AAE8sSIApQyDGthH_faw3vsJxHZV0OD_TA8')
+    bot = Bot(token=BOT_TOKEN)
     await set_commands(bot)
     await dp.start_polling(bot)
 
