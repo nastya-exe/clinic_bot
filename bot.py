@@ -312,6 +312,7 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
 
 
 
+
 async def main():
     bot = Bot(token=BOT_TOKEN)
     await set_commands(bot)
