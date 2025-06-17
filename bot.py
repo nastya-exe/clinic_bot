@@ -17,7 +17,7 @@ from db.models import Clinics, Doctors, DoctorSchedule
 from config import BOT_TOKEN
 
 
-from db.db_session import async_session_maker
+from db.db import async_session_maker
 
 dp = Dispatcher()
 
@@ -289,7 +289,7 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
     # Сохраняем выбор врача в состояние
     await state.update_data(chosen_doctor=doctor_id)
 
-    webapp_url = f"https://example.com//?doctor_id={doctor_id}"
+    webapp_url = f"https://medclinicbot.ru/?doctor_id={doctor_id}"
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Открыть расписание врача", web_app=WebAppInfo(url=webapp_url))],

@@ -12,7 +12,7 @@ class Clinics(Base):
     __tablename__ = 'clinics'
     __table_args__ = (
         PrimaryKeyConstraint('id', name='clinics_pkey'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -20,7 +20,7 @@ class Clinics(Base):
     adress: Mapped[Optional[str]] = mapped_column(Text)
     phone: Mapped[Optional[str]] = mapped_column(Text)
 
-    doctors: Mapped[List['Doctors']] = relationship('Doctors', back_populates='clinic')
+    doctors: Mapped[List['Doctors']] = relationship('Doctors', back_populates='public')
 
 
 class Patients(Base):
@@ -28,7 +28,7 @@ class Patients(Base):
     __table_args__ = (
         PrimaryKeyConstraint('id', name='patients_pkey'),
         UniqueConstraint('telegram_id', name='patients_telegram_id_key'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -43,9 +43,9 @@ class Patients(Base):
 class Doctors(Base):
     __tablename__ = 'doctors'
     __table_args__ = (
-        ForeignKeyConstraint(['clinic_id'], ['clinic.clinics.id'], ondelete='CASCADE', name='doctors_clinic_id_fkey'),
+        ForeignKeyConstraint(['clinic_id'], ['public.clinics.id'], ondelete='CASCADE', name='doctors_clinic_id_fkey'),
         PrimaryKeyConstraint('id', name='doctors_pkey'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -54,7 +54,7 @@ class Doctors(Base):
     specialization: Mapped[Optional[str]] = mapped_column(Text)
     is_active: Mapped[Optional[bool]] = mapped_column(Boolean, server_default=text('true'))
 
-    clinic: Mapped[Optional['Clinics']] = relationship('Clinics', back_populates='doctors')
+    public: Mapped[Optional['Clinics']] = relationship('Clinics', back_populates='doctors')
     appointments: Mapped[List['Appointments']] = relationship('Appointments', back_populates='doctor')
     doctor_schedule: Mapped[List['DoctorSchedule']] = relationship('DoctorSchedule', back_populates='doctor')
 
@@ -63,10 +63,10 @@ class Appointments(Base):
     __tablename__ = 'appointments'
     __table_args__ = (
         CheckConstraint("channel = ANY (ARRAY['telegram'::text, 'phone'::text, 'website'::text])", name='appointments_channel_check'),
-        ForeignKeyConstraint(['doctor_id'], ['clinic.doctors.id'], ondelete='CASCADE', name='appointments_doctor_id_fkey'),
-        ForeignKeyConstraint(['patient_id'], ['clinic.patients.id'], ondelete='CASCADE', name='appointments_patient_id_fkey'),
+        ForeignKeyConstraint(['doctor_id'], ['public.doctors.id'], ondelete='CASCADE', name='appointments_doctor_id_fkey'),
+        ForeignKeyConstraint(['patient_id'], ['public.patients.id'], ondelete='CASCADE', name='appointments_patient_id_fkey'),
         PrimaryKeyConstraint('id', name='appointments_pkey'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -84,9 +84,9 @@ class Appointments(Base):
 class DoctorSchedule(Base):
     __tablename__ = 'doctor_schedule'
     __table_args__ = (
-        ForeignKeyConstraint(['doctor_id'], ['clinic.doctors.id'], name='doctor_schedule_doctor_id_fkey'),
+        ForeignKeyConstraint(['doctor_id'], ['public.doctors.id'], name='doctor_schedule_doctor_id_fkey'),
         PrimaryKeyConstraint('id', name='doctor_schedule_pkey'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -101,9 +101,9 @@ class DoctorSchedule(Base):
 class Notifications(Base):
     __tablename__ = 'notifications'
     __table_args__ = (
-        ForeignKeyConstraint(['appointment_id'], ['clinic.appointments.id'], ondelete='CASCADE', name='notifications_appointment_id_fkey'),
+        ForeignKeyConstraint(['appointment_id'], ['public.appointments.id'], ondelete='CASCADE', name='notifications_appointment_id_fkey'),
         PrimaryKeyConstraint('id', name='notifications_pkey'),
-        {'schema': 'clinic'}
+        {'schema': 'public'}
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
