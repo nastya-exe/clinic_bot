@@ -15,6 +15,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from db.models import Clinics, Doctors, DoctorSchedule
 from config import BOT_TOKEN
+from db.crud import get_doctor_name_by_id
+from urllib.parse import quote
 
 
 from db.db import async_session_maker
@@ -43,10 +45,6 @@ async def cmd_start_handler(message: types.Message, state: FSMContext):
         reply_markup=keyboard
     )
 
-
-
-
-
 # .............................................../appointment.........................................................................................................
 
 class AppointmentStates(StatesGroup):
@@ -56,6 +54,7 @@ class AppointmentStates(StatesGroup):
     choosing_doctor = State()
     choosing_time = State()
     confirming_appointment = State()
+    waiting_for_webapp = State()
 
 async def show_specialists(target, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -287,9 +286,14 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
     doctor_id = int(callback.data.split("_")[1])
 
     # Сохраняем выбор врача в состояние
-    await state.update_data(chosen_doctor=doctor_id)
+    async with async_session_maker() as session:
+        doctor_name = await get_doctor_name_by_id(session, doctor_id)
 
-    webapp_url = f"https://medclinicbot.ru/?doctor_id={doctor_id}"
+    doctor_name_encoded = quote(doctor_name)
+
+    webapp_url = f"https://medclinicbot.ru/?doctor_id={doctor_id}&doctor_name={doctor_name_encoded}"
+
+    await state.update_data(chosen_doctor=doctor_id, chosen_doctor_name=doctor_name)
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Открыть расписание врача", web_app=WebAppInfo(url=webapp_url))],
