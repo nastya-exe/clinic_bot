@@ -291,9 +291,11 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
     doctor_name_encoded = quote(doctor_name)
     telegram_user_id = callback.from_user.id
 
-    webapp_url = f"""https://medclinicbot.ru/?doctor_id={doctor_id}
-                     &doctor_name={doctor_name_encoded}
-                     &patient_id={telegram_user_id}"""
+    webapp_url = (
+        f"https://medclinicbot.ru/?doctor_id={doctor_id}"
+        f"&doctor_name={doctor_name_encoded}"
+        f"&patient_id={telegram_user_id}"
+    )
 
     await state.update_data(chosen_doctor=doctor_id, chosen_doctor_name=doctor_name)
 
