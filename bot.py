@@ -48,13 +48,13 @@ async def cmd_start_handler(message: types.Message, state: FSMContext):
 # .............................................../appointment.........................................................................................................
 
 class AppointmentStates(StatesGroup):
-    choosing_specialization = State()
-    choosing_clinic = State()
-    choosing_mode = State()
-    choosing_doctor = State()
-    choosing_time = State()
-    confirming_appointment = State()
-    waiting_for_webapp = State()
+    choosing_specialization = State() # Специализация
+    choosing_clinic = State() # Клиника
+    choosing_mode = State() # Способ (врач / ближайшее время)
+    choosing_doctor = State() # Выбор врача
+    choosing_time = State() # Время
+    confirming_appointment = State() # Подтверждение
+    waiting_for_webapp = State()  # Ожидание WebApp
 
 async def show_specialists(target, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -84,9 +84,10 @@ async def handle_appointment_callback(callback: CallbackQuery, state: FSMContext
 async def handle_appointment_command(message: Message, state: FSMContext):
     await show_specialists(message, state)
 
+
 @dp.callback_query(F.data == "go_back_to_start")
 async def go_back_to_start_handler(callback: types.CallbackQuery, state: FSMContext):
-    await state.clear()  # можно очистить состояние, если нужно
+    await state.clear()
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="👩‍⚕ Запись к врачу", callback_data="appointment"),
@@ -112,12 +113,12 @@ async def handle_specialist_selection(callback: CallbackQuery, state: FSMContext
     specialization = SPECIALIZATIONS.get(specialist_code)
 
     if not specialization:
-        await callback.answer("Неизвестная специальность", show_alert=True)
+        await callback.answer("Неизвестная специальность")
         return
 
     await state.update_data(chosen_specialization=specialization)
 
-    async with async_session_maker() as session:
+    async with async_session_maker() as session: # создание асинхронной сессии SQLAlchemy для работы с БД.
         stmt = (
             select(Clinics)
             .join(Doctors)
@@ -125,7 +126,7 @@ async def handle_specialist_selection(callback: CallbackQuery, state: FSMContext
                 Doctors.specialization == specialization,
                 Doctors.is_active == True
             )
-            .options(selectinload(Clinics.doctors))
+            .options(selectinload(Clinics.doctors))  # подгрузи врачей заранее (оптимизация)
         )
         result = await session.execute(stmt)
         clinics = result.scalars().unique().all()
@@ -145,8 +146,6 @@ async def handle_specialist_selection(callback: CallbackQuery, state: FSMContext
         f"Вы выбрали: {specialization}\n\nВыберите подходящую для Вас клинику:",
         reply_markup=keyboard
     )
-
-
 
 
 @dp.callback_query(F.data.startswith("clinic_"))
@@ -290,8 +289,11 @@ async def doctor_chosen_handler(callback: CallbackQuery, state: FSMContext):
         doctor_name = await get_doctor_name_by_id(session, doctor_id)
 
     doctor_name_encoded = quote(doctor_name)
+    telegram_user_id = callback.from_user.id
 
-    webapp_url = f"https://medclinicbot.ru/?doctor_id={doctor_id}&doctor_name={doctor_name_encoded}"
+    webapp_url = f"""https://medclinicbot.ru/?doctor_id={doctor_id}
+                     &doctor_name={doctor_name_encoded}
+                     &patient_id={telegram_user_id}"""
 
     await state.update_data(chosen_doctor=doctor_id, chosen_doctor_name=doctor_name)
 
